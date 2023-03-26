@@ -30,7 +30,7 @@ extern "C"
     unsigned int priority;
     const char *name;
   } aos_spawn_config_t;
-  aos_future_t *aos_spawn(aos_spawn_config_t *spawn, aos_fn_t fn, aos_future_t *future);
+  aos_future_t *aos_spawn(aos_spawn_config_t *config, void(*fn)(aos_future_t *), aos_future_t *future);
 
 #ifdef __cplusplus
 }

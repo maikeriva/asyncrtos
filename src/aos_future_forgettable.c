@@ -14,7 +14,13 @@
  *  limitations under the License.
  */
 #include <_aos_future.h>
-#include <stddef.h>
+#include <stdlib.h>
+
+static void _aos_forgettable_cb(aos_future_t *future)
+{
+    free(future->args);
+    free(future);
+}
 
 aos_future_t *aos_forgettable_alloc(size_t args_size)
 {
@@ -29,10 +35,4 @@ aos_future_t *aos_forgettable_alloc(size_t args_size)
     future->cb = _aos_forgettable_cb;
     future->args = args;
     return future;
-}
-
-static void _aos_forgettable_cb(aos_future_t *future)
-{
-    free(future->args);
-    free(future);
 }

@@ -1,5 +1,6 @@
 
 #include <aos_spawn.h>
+#include <_aos_future.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
@@ -12,18 +13,18 @@ struct _aos_spawn_t
 
 struct _aos_spawn_ctx_t
 {
-    aos_fn_t fn;
+    void(*fn)(aos_future_t *);
     aos_future_t *future;
 };
 
 static void _aos_spawn_task(void *args);
 
-aos_future_t *aos_spawn(aos_spawn_config_t *spawn, aos_fn_t fn, aos_future_t *future)
+aos_future_t *aos_spawn(aos_spawn_config_t *config, void(*fn)(aos_future_t *), aos_future_t *future)
 {
-    struct _aos_spawn_ctx_t *ctx = calloc(1, sizeof(_aos_spawn_ctx_t));
+    struct _aos_spawn_ctx_t *ctx = calloc(1, sizeof(struct _aos_spawn_ctx_t));
     if (!ctx)
     {
-        aos_reject(future);
+        _aos_reject(future);;
         return future;
     }
     ctx->fn = fn;
@@ -36,7 +37,7 @@ aos_future_t *aos_spawn(aos_spawn_config_t *spawn, aos_fn_t fn, aos_future_t *fu
             config->priority,
             NULL))
     {
-        aos_reject(future);
+        _aos_reject(future);;
         return future;
     }
     return future;

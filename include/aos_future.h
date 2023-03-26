@@ -19,6 +19,7 @@
  */
 #pragma once
 #include <aos_settings.h>
+#include <stddef.h>
 #include <stdbool.h>
 
 #ifdef __cplusplus

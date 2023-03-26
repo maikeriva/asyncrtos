@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 #include <_aos_future.h>
-#include <stddef.h>
+#include <stdlib.h>
 
 void *aos_args_get(aos_future_t *future)
 {
@@ -58,4 +58,9 @@ void *aos_future_free(aos_future_t *future)
     free(future->args);
     free(future);
     return ctx;
+}
+
+void _aos_reject(aos_future_t *future) {
+    future->state = AOS_STATE_REJECTED;
+    future->cb(future);
 }

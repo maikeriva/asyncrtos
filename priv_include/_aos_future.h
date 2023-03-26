@@ -28,15 +28,18 @@ extern "C"
   {
       AOS_STATE_NEW,
       AOS_STATE_RESOLVED,
+      AOS_STATE_REJECTED,
   } _aos_state_t;
 
   struct _aos_future_t
   {
     _aos_state_t state;
-    aos_cb_t cb;
+    void (*cb)(struct _aos_future_t *);
     void *ctx;
     void *args;
   };
+
+  void _aos_reject(aos_future_t *future);
 
 #ifdef __cplusplus
 }

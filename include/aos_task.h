@@ -28,7 +28,7 @@ extern "C"
     void aos_task_handler_unset(aos_task_t *task, AOS_ENUM_T event);
     bool aos_task_isstopping(aos_task_t *task);
 
-    typedef unsigned int (*aos_task_loop_t)(aos_task_t *task);
+    typedef void (*aos_task_loop_t)(aos_task_t *task);
     typedef struct _aos_task_loop_entry_t aos_task_loop_entry_t;
     aos_task_loop_entry_t* aos_task_loop_set(aos_task_t *task, aos_task_loop_t loop, unsigned int interval_ms);
     void aos_task_loop_unset(aos_task_t *task, aos_task_loop_entry_t* handle);
@@ -40,8 +40,8 @@ extern "C"
         unsigned int stacksize;
         unsigned int queuesize;
         unsigned int priority;
-        aos_task_hook_t *onstart;
-        aos_task_hook_t *onstop;
+        aos_task_hook_t onstart;
+        aos_task_hook_t onstop;
         // bool rejectonshutdown;
         const char *name;
         void *args;
