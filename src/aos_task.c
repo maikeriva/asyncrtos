@@ -105,13 +105,17 @@ static void _aos_task(void *args)
             }
             else
             {
-                for (_aos_task_handler_entry_t *entry = task->handlers; entry; entry = entry->next)
+                bool found = false;
+                for (_aos_task_handler_entry_t *entry = task->handlers; entry && !found; entry = entry->next)
                 {
                     if (entry->event == msg.event)
                     {
                         entry->handler(task, msg.future);
-                        break;
+                        found = true;
                     }
+                }
+                if (!found) {
+                    _aos_reject(msg.future);
                 }
             }
         }

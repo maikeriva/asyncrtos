@@ -9,6 +9,7 @@ typedef struct _aos_eventful_ctx_t
 {
     struct _aos_task_t *task;
     AOS_ENUM_T event;
+    void *ctx;
 } _aos_eventful_ctx_t;
 
 static void _aos_eventful_cb(aos_future_t *future)
@@ -42,6 +43,7 @@ aos_future_t *aos_eventful_alloc(aos_eventful_config_t *config, size_t args_size
     }
     ctx->task = config->task;
     ctx->event = config->event;
+    ctx->ctx = config->ctx;
     future->cb = _aos_eventful_cb;
     future->ctx = ctx;
     future->args = args;
@@ -53,7 +55,8 @@ void *aos_eventful_free(aos_future_t *future)
     if (!future)
         return NULL;
 
-    void *ctx = future->ctx;
+    void *ctx = ((_aos_eventful_ctx_t*)future->ctx)->ctx;
+    free(future->ctx);
     free(future->args);
     free(future);
     return ctx;
