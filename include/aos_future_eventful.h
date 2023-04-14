@@ -1,5 +1,11 @@
 /**
- * Copyright 2021-2023 Michele Riva
+ * @file aos_future_eventful.h
+ * @author Michele Riva (michele.riva@protonmail.com)
+ * @brief AsyncRTOS eventful future API
+ * @version 0.9
+ * @date 2023-04-14
+ *
+ * @copyright Copyright (c) 2023
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,10 +18,6 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
- *
- * TODO:
- * - Consider whether to introduce an aos_deallocator_t parameter to futures, which will be called when it is necessary to deallocate a more complex parameter structure.
- * - Consider introducing .handlers and .handlers_count fields to aos_task_config_t, so that handlers can be set through a declarative approach.
  */
 #pragma once
 #include <aos_future.h>
@@ -26,13 +28,31 @@ extern "C"
 {
 #endif
 
+  /**
+   * @brief Eventful future configuration
+   */
   typedef struct aos_eventful_config_t
   {
-    aos_task_t *task;
-    AOS_ENUM_T event;
-    void *ctx;
+    aos_task_t *task; // Task to respond to
+    int event;        // Event to raise on response
+    void *ctx;        // Context (optional)
   } aos_eventful_config_t;
+
+  /**
+   * @brief Allocate eventful future
+   *
+   * @param config Configuration
+   * @param args_size Size of attached arguments
+   * @return Future if success, NULL otherwise
+   */
   aos_future_t *aos_eventful_alloc(aos_eventful_config_t *config, size_t args_size);
+
+  /**
+   * @brief Free eventful future
+   *
+   * @param future Future
+   * @return Context attached to future (if any)
+   */
   void *aos_eventful_free(aos_future_t *future);
 
 #ifdef __cplusplus

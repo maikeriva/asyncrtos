@@ -5,7 +5,7 @@ idf_component_register(
     PRIV_INCLUDE_DIRS
         "priv_include"
     REQUIRES
-        unity
-        asyncrtos
-        freertos
+        "unity"
+        "asyncrtos"
+        "freertos"
 )

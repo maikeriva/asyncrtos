@@ -17,7 +17,7 @@ static void test_cb(aos_future_t *future)
     TEST_HEAP_STOP
 }
 
-TEST_CASE("Resolve callbacker 0, sweetened with allocator_t", "[aos]")
+TEST_CASE("Resolve future without args", "[aos]")
 {
     TEST_HEAP_START
     struct test_cb_ctx_t *ctx = calloc(1,sizeof(struct test_cb_ctx_t));
@@ -27,6 +27,20 @@ TEST_CASE("Resolve callbacker 0, sweetened with allocator_t", "[aos]")
         .ctx = ctx
     };
     aos_future_t *future = AOS_FUTURE_ALLOC_T(test_fn_resolve_0)(&config);
+    TEST_ASSERT_NOT_NULL(future);
+    test_fn_resolve_0(future);
+}
+
+TEST_CASE("Resolve future with args", "[aos]")
+{
+    TEST_HEAP_START
+    struct test_cb_ctx_t *ctx = calloc(1,sizeof(struct test_cb_ctx_t));
+    TEST_ASSERT_NOT_NULL(ctx);
+    aos_future_config_t config = {
+        .cb = test_cb,
+        .ctx = ctx
+    };
+    aos_future_t *future = AOS_FUTURE_ALLOC_T(test_fn_resolve_1)(&config,1);
     TEST_ASSERT_NOT_NULL(future);
     test_fn_resolve_0(future);
 }

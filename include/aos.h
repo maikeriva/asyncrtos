@@ -1,5 +1,11 @@
 /**
- * Copyright 2021-2023 Michele Riva
+ * @file aos.h
+ * @author Michele Riva (michele.riva@protonmail.com)
+ * @brief AsyncRTOS complete API
+ * @version 0.9
+ * @date 2023-04-14
+ *
+ * @copyright Copyright (c) 2023
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

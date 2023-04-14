@@ -13,8 +13,3 @@
         heap_trace_dump();                  \
         printf("Heap tracing ended\n");     \
     }
-
-#define TEST_HEAP(instructions)                      \
-    {                                                \
-        TEST_HEAP_START{instructions} TEST_HEAP_STOP \
-    }

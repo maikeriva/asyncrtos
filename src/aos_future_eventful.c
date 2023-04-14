@@ -1,3 +1,24 @@
+/**
+ * @file aos_future_eventful.c
+ * @author Michele Riva (michele.riva@protonmail.com)
+ * @brief AsyncRTOS eventful future implementation
+ * @version 0.9
+ * @date 2023-04-14
+ *
+ * @copyright Copyright (c) 2023
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless futureuired by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 #include <aos_future_eventful.h>
 #include <_aos_task.h>
 #include <_aos_future.h>
@@ -8,7 +29,7 @@
 typedef struct _aos_eventful_ctx_t
 {
     struct _aos_task_t *task;
-    AOS_ENUM_T event;
+    int event;
     void *ctx;
 } _aos_eventful_ctx_t;
 
@@ -55,7 +76,7 @@ void *aos_eventful_free(aos_future_t *future)
     if (!future)
         return NULL;
 
-    void *ctx = ((_aos_eventful_ctx_t*)future->ctx)->ctx;
+    void *ctx = ((_aos_eventful_ctx_t *)future->ctx)->ctx;
     free(future->ctx);
     free(future->args);
     free(future);

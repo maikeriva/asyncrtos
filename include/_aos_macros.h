@@ -1,5 +1,11 @@
 /**
- * Copyright 2021-2023 Michele Riva
+ * @file _aos_macros.h
+ * @author Michele Riva (michele.riva@protonmail.com)
+ * @brief AsyncRTOS macros implementation (do not use directly)
+ * @version 0.9
+ * @date 2023-04-14
+ *
+ * @copyright Copyright (c) 2023
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,16 +18,6 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
- *
- * TODO:
- * - Complete conditional compiling depending on AOS_TASK
- *
- * FIXME: Check _AOS_DECLARE_0 works this way, or else we have to fall back to:
- * typedef void fn_name##_##tag##_args_t;
- * typedef void fn_name##_##tag##_args_declared;
- *     typedef AOS_DECLARED_T##fn_name##_args_declared;
- * - IMPORTANT: Should we possibly keep the possibility of alloc(void*), thus NOT duplicating parameters, for advanced users?
- *   It would require us to cleanup ALLOC_T()() with corresponding FREE_T()() calls... Which could be overridden if anyone wants to.
  */
 #pragma once
 #include <aos_future_awaitable.h>

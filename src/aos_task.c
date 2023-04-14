@@ -1,10 +1,31 @@
+/**
+ * @file aos_task.c
+ * @author Michele Riva (michele.riva@protonmail.com)
+ * @brief AsyncRTOS task implementation
+ * @version 0.9
+ * @date 2023-04-14
+ *
+ * @copyright Copyright (c) 2023
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless futureuired by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 #include <_aos_task.h>
 #include <_aos_future.h>
 #include <string.h>
 
 typedef enum
 {
-    AOS_TASK_EVENT_START = AOS_ENUM_MIN,
+    AOS_TASK_EVENT_START = INT32_MIN,
     AOS_TASK_EVENT_STOP,
     AOS_TASK_EVENT_LOOPREGISTER,
     AOS_TASK_EVENT_LOOPUNREGISTER,
@@ -13,7 +34,7 @@ typedef enum
 typedef struct _aos_eventful_ctx_t
 {
     aos_task_t *task;
-    AOS_ENUM_T event;
+    int event;
 } _aos_eventful_ctx_t;
 
 static void _aos_task_queue_close(aos_task_t *task)
@@ -35,9 +56,6 @@ static void _aos_task_queue_close(aos_task_t *task)
                     break;
                 }
             }
-            // It is a notifier response! Use alternative free method.
-            // _aos_eventful_ctx_free(next_msg.future); // Private function?
-            // aos_eventful_free(next_msg.future); // Returns context?
         }
         else
         {
@@ -90,7 +108,7 @@ static void _aos_task(void *args)
             {
                 if (task->onstop)
                 {
-                    if (task->onstop(task, msg.future))
+                    if (!task->onstop(task, msg.future))
                     {
                         _aos_task_queue_close(task);
                         vTaskDelete(NULL);
@@ -114,20 +132,38 @@ static void _aos_task(void *args)
                         found = true;
                     }
                 }
-                if (!found) {
+                if (!found)
+                {
                     _aos_reject(msg.future);
                 }
             }
         }
         else
         {
-            TickType_t tick = xTaskGetTickCount();
             for (_aos_task_loop_entry_t *entry = task->loops; entry; entry = entry->next)
             {
-                if (tick - entry->last_exec >= entry->interval)
+                TickType_t tick = xTaskGetTickCount();
+                if (tick - entry->last_exec >= entry->interval && !entry->remove)
                 {
                     entry->last_exec = tick;
                     entry->loop(task);
+                }
+            }
+            // Cleanup loops marked for removal
+            // Loop entries cannot be safely removed while looping on the list,
+            // Thus we mark them for removal and do that afterwards
+            _aos_task_loop_entry_t **entry = &task->loops;
+            while (*entry)
+            {
+                if ((*entry)->remove)
+                {
+                    _aos_task_loop_entry_t *entry_next = (*entry)->next;
+                    free(*entry);
+                    *entry = entry_next;
+                }
+                else
+                {
+                    entry = &(*entry)->next;
                 }
             }
         }
@@ -147,11 +183,13 @@ aos_task_t *aos_task_alloc(aos_task_config_t *config)
         return NULL;
     }
     task->semaphore = semaphore;
-    task->name = name; // FIXME: Verify this can be null
-    task->stacksize = config->stacksize ? config->stacksize : AOS_TASK_STACKSIZEDEFAULT;
-    task->queuesize = config->queuesize ? config->queuesize : AOS_TASK_QUEUESIZEDEFAULT;
-    task->priority = config->priority ? config->priority : AOS_TASK_PRIORITYDEFAULT;
     task->args = config->args;
+    task->name = name; // FIXME: Verify this can be null
+    task->onstart = config->onstart;
+    task->onstop = config->onstop;
+    task->stacksize = config->stacksize ? config->stacksize : CONFIG_AOS_TASK_STACKSIZEDEFAULT;
+    task->queuesize = config->queuesize ? config->queuesize : CONFIG_AOS_TASK_QUEUESIZEDEFAULT;
+    task->priority = config->priority ? config->priority : CONFIG_AOS_TASK_PRIORITYDEFAULT;
     return task;
 }
 
@@ -178,11 +216,12 @@ void aos_task_free(aos_task_t *task)
     free(task);
 }
 
+// FIXME: Should we re-run the start hook on idempotency? Likely not, that is meant to be run only as an aid to reach the "started" state.
 aos_future_t *aos_task_start(aos_task_t *task, aos_future_t *future)
 {
     if (task->queue)
     {
-        _aos_reject(future);
+        aos_resolve(future);
         return future;
     }
     task->queue = xQueueCreate(task->queuesize, sizeof(_aos_task_msg_t));
@@ -212,13 +251,13 @@ aos_future_t *aos_task_stop(aos_task_t *task, aos_future_t *future)
     return aos_task_send(task, AOS_TASK_EVENT_STOP, future);
 }
 
-aos_future_t *aos_task_send(aos_task_t *task, AOS_ENUM_T event, aos_future_t *future)
+aos_future_t *aos_task_send(aos_task_t *task, int event, aos_future_t *future)
 {
     xSemaphoreTakeRecursive(task->semaphore, portMAX_DELAY);
     if (!task->queue)
     {
         xSemaphoreGiveRecursive(task->semaphore);
-        _aos_reject(future);
+        aos_resolve(future);
         return future;
     }
     _aos_task_msg_t msg = {
@@ -239,7 +278,7 @@ void *aos_task_args_get(aos_task_t *task)
     return task->args;
 }
 
-unsigned int aos_task_handler_set(aos_task_t *task, aos_task_handler_t handler, AOS_ENUM_T event)
+unsigned int aos_task_handler_set(aos_task_t *task, aos_task_handler_t handler, int event)
 {
     _aos_task_handler_entry_t **entry = &task->handlers;
     while (*entry)
@@ -261,9 +300,10 @@ unsigned int aos_task_handler_set(aos_task_t *task, aos_task_handler_t handler, 
     return 0;
 }
 
-void aos_task_handler_unset(aos_task_t *task, AOS_ENUM_T event)
+void aos_task_handler_unset(aos_task_t *task, int event)
 {
-    for (_aos_task_handler_entry_t **entry = &task->handlers; *entry; entry = (*entry)->next ? &(*entry)->next : NULL)
+    // for (_aos_task_handler_entry_t **entry = &task->handlers; *entry; entry = (*entry)->next ? &(*entry)->next : NULL)
+    for (_aos_task_handler_entry_t **entry = &task->handlers; *entry; entry = &(*entry)->next)
     {
         if ((*entry)->event == event)
         {
@@ -275,7 +315,7 @@ void aos_task_handler_unset(aos_task_t *task, AOS_ENUM_T event)
     }
 }
 
-aos_task_loop_entry_t *aos_task_loop_set(aos_task_t *task, aos_task_loop_t loop, unsigned int interval_ms)
+aos_task_loop_handle_t *aos_task_loop_set(aos_task_t *task, aos_task_loop_t loop, unsigned int interval_ms)
 {
     _aos_task_loop_entry_t **entry = &task->loops;
     while (*entry)
@@ -289,18 +329,17 @@ aos_task_loop_entry_t *aos_task_loop_set(aos_task_t *task, aos_task_loop_t loop,
     }
     (*entry)->loop = loop;
     (*entry)->interval = pdMS_TO_TICKS(interval_ms);
+    (*entry)->last_exec = xTaskGetTickCount();
     return *entry;
 }
 
-void aos_task_loop_unset(aos_task_t *task, aos_task_loop_entry_t *loop_entry)
+void aos_task_loop_unset(aos_task_t *task, aos_task_loop_handle_t *loop_entry)
 {
-    for (_aos_task_loop_entry_t **entry = &task->loops; *entry; entry = (*entry)->next ? &(*entry)->next : NULL)
+    for (_aos_task_loop_entry_t *entry = task->loops; entry; entry = entry->next)
     {
-        if ((*entry) == loop_entry)
+        if (entry == loop_entry)
         {
-            _aos_task_loop_entry_t *entry_next = (*entry)->next;
-            free(*entry);
-            *entry = entry_next;
+            entry->remove = true;
             return;
         }
     }

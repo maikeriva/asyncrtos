@@ -16,20 +16,6 @@ TEST_CASE("Task alloc->dealloc", "[aos]")
     TEST_HEAP_STOP
 }
 
-// TEST_CASE("Task alloc with config", "[aos]")
-// {
-//     TEST_HEAP_START
-//     aos_task_config_t config = {
-//         .name = "Test task",
-//         .stacksize = 2048,
-//         .queuesize = 3,
-//         .priority = 15};
-//     aos_task_t *task = aos_task_alloc(&config);
-//     TEST_ASSERT_NOT_NULL(task);
-//     aos_task_free(task);
-//     TEST_HEAP_STOP
-// }
-
 TEST_CASE("Task alloc->start->stop->dealloc", "[aos]")
 {
     TEST_HEAP_START
@@ -133,9 +119,9 @@ TEST_CASE("Task loops", "[aos]")
     aos_task_t *task = aos_task_alloc(&task_config);
     TEST_ASSERT_NOT_NULL(task);
 
-    aos_task_loop_entry_t *loop0 = aos_task_loop_set(task, task_loop0, 100);
+    aos_task_loop_handle_t *loop0 = aos_task_loop_set(task, task_loop0, 100);
     TEST_ASSERT_NOT_NULL(loop0);
-    aos_task_loop_entry_t *loop1 = aos_task_loop_set(task, task_loop1, 150);
+    aos_task_loop_handle_t *loop1 = aos_task_loop_set(task, task_loop1, 150);
     TEST_ASSERT_NOT_NULL(loop1);
 
     aos_future_t *start_future = aos_awaitable_alloc(0);
@@ -160,7 +146,7 @@ TEST_CASE("Task loops", "[aos]")
     TEST_HEAP_STOP
 }
 
-TEST_CASE("Task forwarding", "[aos]")
+TEST_CASE("Task forwarding with eventfuls", "[aos]")
 {
     TEST_HEAP_START
 

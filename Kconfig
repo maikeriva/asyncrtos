@@ -1,0 +1,27 @@
+menu "AsyncRTOS"
+
+    config AOS_TASK_QUEUESIZEDEFAULT
+        int "Default queue size"
+        default 3
+        help
+            The default queue size for new tasks.
+            Queue size can also be adjusted individually for each task in the 
+            aos_task_config_t struct.
+            
+    config AOS_TASK_STACKSIZEDEFAULT
+        int "Default stack size"
+        default 3072
+        help
+            The default stack size for new tasks and spawns.
+            Stack size can also be adjusted individually for each task in the 
+            aos_task_config_t struct.
+
+    config AOS_TASK_PRIORITYDEFAULT
+        int "Default priority"
+        default 1
+        help
+            The default priority for new tasks and spawns.
+            Priority can also be adjusted individually for each task in the 
+            aos_task_config_t struct.
+
+endmenu

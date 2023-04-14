@@ -1,5 +1,11 @@
 /**
- * Copyright 2021-2023 Michele Riva
+ * @file aos_future.c
+ * @author Michele Riva (michele.riva@protonmail.com)
+ * @brief AsyncRTOS generic future implementation
+ * @version 0.9
+ * @date 2023-04-14
+ *
+ * @copyright Copyright (c) 2023
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +66,8 @@ void *aos_future_free(aos_future_t *future)
     return ctx;
 }
 
-void _aos_reject(aos_future_t *future) {
+void _aos_reject(aos_future_t *future)
+{
     future->state = AOS_STATE_REJECTED;
     future->cb(future);
 }
